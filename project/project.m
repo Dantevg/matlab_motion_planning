@@ -58,3 +58,6 @@ for planner_i = 1:size(planners, 1)
         end
     end
 end
+
+%% Testing
+map = generate_map(1);
