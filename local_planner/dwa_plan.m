@@ -75,7 +75,7 @@ function [pose, traj, flag] = dwa_plan(start, goal, varargin)
         % goal found
         if dist([robot.x, robot.y], goal(1:2)') < max_dist
             flag = true;
-            disp("goal arrived!");
+            % disp("goal arrived!");
             break;
         end
     end
