@@ -22,6 +22,7 @@ goal = [
 
 % load environment
 load("gridmap_20x20_scene1.mat");
+grid_map = generate_map(0); % TODO: dynamically update map within innermost for loop during simulation
 map_size = size(grid_map);
 G = 1;
 
@@ -54,10 +55,10 @@ for planner_i = 1:size(planners, 1)
                 path = plan_global(planner(1), grid_map, start_pose, goal_pose);
             end
             pose = plan_local(planner(2), path, grid_map, start_pose, goal_pose);
+            % TODO: add another loop in which to update the map
+            % also, update the map generation to make ships loop around the
+            % border
             poses{planner_i, start_i, goal_i} = pose;
         end
     end
 end
-
-%% Testing
-map = generate_map(1);
