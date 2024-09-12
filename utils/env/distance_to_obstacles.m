@@ -9,7 +9,7 @@ function distances = distance_to_obstacles(map, pose)
 %%
 
 obstacle_coords = map_to_points(map);
-distances = min(pdist2(obstacle_coords, pose(:,1:2)), [], 2);
+distances = min(pdist2(obstacle_coords, pose(:,1:2)))';
 end
 
 %%
