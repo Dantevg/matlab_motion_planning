@@ -1,28 +1,41 @@
+addpath("global_planner/graph_search");
+addpath("local_planner");
+addpath("utils/env", "utils/data/map");
+
+clear all;
+clc;
+
+if ~isfolder("out")
+    mkdir("out");
+end
+
 %% Initialization
+
+% amount of map update steps inbetween start and goal
+n_steps = 5;
 
 % combinations of global and local planners
 planners = [
-    "a_star"        "pid_plan"; ...
-    "voronoi_plan"  "pid_plan"; ...
-    "dijkstra"      "pid_plan"; ...
+    "a_star"        "apf_plan"; ...
+    "voronoi_plan"  "apf_plan"; ...
+    "dijkstra"      "apf_plan"; ...
     "",             "dwa_plan"; ...
 ];
 
 % start and goal pose (y, x, angle)
 % TODO: randomize these between runs!
-start = [
+starts = [
     3, 2, pi / 2; ...
     4, 2, pi / 2; ...
 ];
 
-goal = [
+goals = [
     18, 29, pi / 2; ...
     18, 28, pi / 2; ...
 ];
 
 % load environment
-load("gridmap_20x20_scene1.mat");
-grid_map = generate_map(0); % TODO: dynamically update map within innermost for loop during simulation
+grid_map = generate_map(0);
 map_size = size(grid_map);
 G = 1;
 
@@ -40,24 +53,37 @@ end
 
 %% Run simulation
 
-poses = cell(length(planners), length(start), length(goal));
+poses = cell(length(planners), length(starts), length(goals));
 
 % loop over all planners
 for planner_i = 1:size(planners, 1)
     planner = planners(planner_i,:);
     % loop over all combinations of starting and ending poses
-    for start_i = 1:size(start, 1)
-        for goal_i = 1:size(goal, 1)
-            start_pose = start(start_i,:);
-            goal_pose = goal(goal_i,:);
-            fprintf("planner: %12s / %-8s    start: %.2f %.2f %.2f    goal: %.2f %.2f %.2f\n", planner, start_pose, goal_pose)
-            if planner(1) ~= ""
-                path = plan_global(planner(1), grid_map, start_pose, goal_pose);
+    for start_i = 1:size(starts, 1)
+        for goal_i = 1:size(goals, 1)
+            start = starts(start_i,:);
+            goal = goals(goal_i,:);
+            pose = [];
+            fprintf("planner: %12s / %-8s    start: %.2f %.2f %.2f    goal: %.2f %.2f %.2f\n", planner, start, goal);
+            for step_i = 1:n_steps
+                grid_map = generate_map(step_i);
+                if planner(1) ~= ""
+                    rounded_start = [round(start(1:2)), start(3)];
+                    path = plan_global(planner(1), grid_map, rounded_start, goal);
+                end
+                new_pose = plan_local(planner(2), path, grid_map, start, goal);
+                cutoff = min(length(new_pose), floor(length(new_pose) / (n_steps - step_i + 1)));
+                start = new_pose(cutoff, :);
+                pose = [pose; new_pose(1:cutoff, :)];
             end
-            pose = plan_local(planner(2), path, grid_map, start_pose, goal_pose);
-            % TODO: add another loop in which to update the map
-            % also, update the map generation to make ships loop around the
+
+            if length(pose) >= 1000
+                fprintf("could not find goal!\n")
+            end
+            % TODO: update the map generation to make ships loop around the
             % border
+            start = starts(start_i,:); % reset start variable to initial value for saving
+            save(sprintf("out/pose-%s-%s-%.2f_%.2f_%.2f-%.2f_%.2f_%.2f.mat", planner, start, goal), "path", "pose", "start", "goal")
             poses{planner_i, start_i, goal_i} = pose;
         end
     end

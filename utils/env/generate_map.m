@@ -43,6 +43,6 @@ cells = [
 ];
 end
 
-function index = pos2idx(map_height, pos)
-index = pos(2) + (pos(1)-1) * map_height;
+function index = pos2idx(map_size, pos)
+index = pos(2) + (pos(1)-1) * map_size(1);
 end
