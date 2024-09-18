@@ -35,7 +35,8 @@ goals = [
 ];
 
 % load environment
-grid_map = generate_map(0);
+% grid_map = generate_map(0);
+grid_map = load("gridmap_ships_01.mat");
 map_size = size(grid_map);
 G = 1;
 
@@ -66,7 +67,7 @@ for planner_i = 1:size(planners, 1)
             pose = [];
             fprintf("planner: %12s / %-8s    start: %.2f %.2f %.2f    goal: %.2f %.2f %.2f\n", planner, start, goal);
             for step_i = 1:n_steps
-                grid_map = generate_map(step_i);
+                grid_map = load(sprintf("gridmap_ships_%02d.mat", step_i));
                 if planner(1) ~= ""
                     rounded_start = [round(start(1:2)), start(3)];
                     path = plan_global(planner(1), grid_map, rounded_start, goal);
@@ -77,13 +78,8 @@ for planner_i = 1:size(planners, 1)
                 pose = [pose; new_pose(1:cutoff, :)];
             end
 
-            if length(pose) >= 1000
-                fprintf("could not find goal!\n")
-            end
-            % TODO: update the map generation to make ships loop around the
-            % border
             start = starts(start_i,:); % reset start variable to initial value for saving
-            save(sprintf("out/pose-%s-%s-%.2f_%.2f_%.2f-%.2f_%.2f_%.2f.mat", planner, start, goal), "path", "pose", "start", "goal")
+            save(sprintf("out/pose-%s-%s-%.2f_%.2f_%.2f-%.2f_%.2f_%.2f.mat", planner, start, goal), "pose", "start", "goal")
             poses{planner_i, start_i, goal_i} = pose;
         end
     end
